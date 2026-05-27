@@ -1,0 +1,325 @@
+import { Injectable } from '@angular/core';
+import * as XLSX from 'xlsx';
+import { SheetData, PersonalOperativo, PersonaProcesada, Catalogo } from '../models/excel.models';
+
+@Injectable({ providedIn: 'root' })
+export class ExcelReaderService {
+
+  readFile(file: File): Promise<SheetData> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const wb = XLSX.read(e.target!.result, { type: 'array' });
+          resolve(this.extractData(wb));
+        } catch {
+          reject(new Error('No se pudo leer el archivo. Verifica que sea un Excel válido.'));
+        }
+      };
+      reader.onerror = () => reject(new Error('Error al leer el archivo'));
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  private extractData(wb: XLSX.WorkBook): SheetData {
+    const allSheets = wb.SheetNames;
+    const rawHeaders: { [sheet: string]: string[] } = {};
+    allSheets.forEach(s => (rawHeaders[s] = this.getHeaders(wb, s)));
+
+    // Hoja: PERSONAL OPERATIVO → todas las columnas
+    const poSheetName = allSheets.find(s => s.toLowerCase().includes('personal operativo')) ?? '';
+    const poRows = this.sheetToRows(wb, poSheetName);
+    const poHeaders = Object.keys(poRows[0] ?? {});
+
+    const col = (candidates: string[]) => this.findColumnKey(poHeaders, candidates) ?? '';
+
+    const colExact = (candidates: string[]) => {
+    const normalize = (s: string) =>
+      s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      
+      for (const header of poHeaders) {
+          const norm = normalize(header?.toString() ?? '');
+          if (candidates.some(c => normalize(c) === norm)) return header;
+      }
+    
+      return '';
+    };
+
+    const keys = {
+      entidadFederativa:   col(['entidad federativa', 'entidad']),
+      cvePresupuestal:     col(['cve_presupuestal', 'cve presupuestal', 'presupuestal']),
+      clues:               col(['clues']),
+      nombreUnidadMedica:  col(['nombre unidad', 'unidad medica', 'unidad médica']),
+      especialidad:        col(['especialidad']),
+      nombreConsultorio:   col(['nombre consultorio', 'consultorio']),
+      turno:               col(['turno']),
+      claveEmpleado:       col(['clave empleado', 'clave_empleado']),
+      nombre:              colExact(['NOMBRE', 'nombre']),
+      apellidoPaterno:     col(['apelido paterno', 'apellido paterno', 'paterno']),
+      apellidoMaterno:     col(['apellido materno', 'materno']),
+      titular:             col(['titular']),
+      horaInicioAtencion:  col(['hora_inicio_atencion', 'hora inicio atencion']),
+      horaFinAtencion:     col(['hora_fin_atencion', 'hora fin atencion']),
+      horaInicioCita:      col(['hora_inicio_cita', 'hora inicio cita']),
+      horaFinCita:         col(['hora_fin_cita', 'hora fin cita']),
+      intervaloConsulta:   col(['intervalo']),
+      ocasionServicio:     col(['ocasion_servicio', 'ocasion servicio']),
+      lunes:               col(['lunes']),
+      martes:              col(['martes']),
+      miercoles:           col(['miercoles', 'miércoles']),
+      jueves:              col(['jueves']),
+      viernes:             col(['viernes']),
+      sabado:              col(['sabado', 'sábado']),
+      domingo:             col(['domingo']),
+    };
+
+    const personalOperativo: PersonalOperativo[] = poRows
+      .filter(r => keys.nombre && r[keys.nombre])
+      .map(r => ({
+        entidadFederativa:   r[keys.entidadFederativa]  || '',
+        cvePresupuestal:     r[keys.cvePresupuestal]    || '',
+        clues:               r[keys.clues]              || '',
+        nombreUnidadMedica:  r[keys.nombreUnidadMedica] || '',
+        especialidad:        r[keys.especialidad]       || '',
+        nombreConsultorio:   r[keys.nombreConsultorio]  || '',
+        turno:               r[keys.turno]              || '',
+        claveEmpleado:       r[keys.claveEmpleado]      || '',
+        nombre:              r[keys.nombre]             || '',
+        apellidoPaterno:     r[keys.apellidoPaterno]    || '',
+        apellidoMaterno:     r[keys.apellidoMaterno]    || '',
+        titular:             r[keys.titular]            || '',
+        horaInicioAtencion:  r[keys.horaInicioAtencion] || '',
+        horaFinAtencion:     r[keys.horaFinAtencion]    || '',
+        horaInicioCita:      r[keys.horaInicioCita]     || '',
+        horaFinCita:         r[keys.horaFinCita]        || '',
+        intervaloConsulta:   r[keys.intervaloConsulta]  || '',
+        ocasionServicio:     r[keys.ocasionServicio]    || '',
+        lunes:               r[keys.lunes]              || '',
+        martes:              r[keys.martes]             || '',
+        miercoles:           r[keys.miercoles]          || '',
+        jueves:              r[keys.jueves]             || '',
+        viernes:             r[keys.viernes]            || '',
+        sabado:              r[keys.sabado]             || '',
+        domingo:             r[keys.domingo]            || '',
+      }));
+
+    // Hoja: Catalogos → descripción y nomenclatura
+    const catSheetName = allSheets.find(s => s.toLowerCase().includes('catalogo')) ?? '';
+    const catRows = this.sheetToRows(wb, catSheetName);
+    const catHeaders = Object.keys(catRows[0] ?? {});
+    const catDesc = this.findColumnKey(catHeaders, ['descripcion', 'descripción', 'especialidad']) ?? '';
+    const catNom  = this.findColumnKey(catHeaders, ['nomenclatura']) ?? '';
+    const catalogos: Catalogo[] = catRows
+      .filter(r => r[catDesc])
+      .map(r => ({
+        descripcion:  r[catDesc] || '',
+        nomenclatura: r[catNom]  || '',
+      }));
+    // Información procesada: viene de PERSONAL OPERATIVO
+  // const personasProcesadas: PersonaProcesada[] = personalOperativo
+  //   .filter(p => p.nombre.trim() !== '')
+  //   .map(p => ({
+  //     nombre:          p.nombre,
+  //     apellidoPaterno: p.apellidoPaterno,
+  //     apellidoMaterno: p.apellidoMaterno,
+  //     nombreCompleto:  `${p.apellidoPaterno} ${p.apellidoMaterno} ${p.nombre}`.trim(),
+  //   }));
+
+    const personasProcesadas: PersonaProcesada[] = [];
+    for (const p of personalOperativo) {
+      if (!p.nombre.trim()) continue;
+      const nombreMedico = `${p.apellidoPaterno} ${p.apellidoMaterno} ${p.nombre}`.trim();
+      const nomenclatura = this.buscarNomenclatura(p.especialidad, catalogos);
+      const consultorio  = this.generarConsultorio(
+        nomenclatura,
+        nombreMedico,
+        personasProcesadas.map(x => ({ nomenclatura: x.consultorio, nombre: x.nombreCompleto }))
+      );
+    personasProcesadas.push({
+      nombre:          p.nombre,
+      apellidoPaterno: p.apellidoPaterno,
+      apellidoMaterno: p.apellidoMaterno,
+      nombreCompleto:  nombreMedico,
+      consultorio,
+      consultorioFisico: p.especialidad,
+      horarioAtencion: `${this.formatearHora(p.horaInicioAtencion)} - ${this.formatearHora(p.horaFinAtencion)}`,  
+      horarioCitas: this.generarHorarioCitas(p.horaInicioCita,  p.horaFinCita,  p.intervaloConsulta),
+      intervalo: p.intervaloConsulta,
+      subRol:   'MEDICO ESPECIALISTA',
+      turno:    this.obtenerTurno(p.turno),
+      tipoVisita:   'CONSULTORIO',
+      diasConsulta: this.obtenerDiasConsulta(p),
+    });
+}
+
+    return { personalOperativo, personasProcesadas, allSheets, rawHeaders };
+  }
+
+  private sheetToRows(wb: XLSX.WorkBook, sheetName: string): any[] {
+    const ws = wb.Sheets[sheetName];
+    if (!ws) return [];
+    return XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
+  }
+
+  private getHeaders(wb: XLSX.WorkBook, sheetName: string): string[] {
+    const ws = wb.Sheets[sheetName];
+    if (!ws) return [];
+    const rows: any[] = XLSX.utils.sheet_to_json(ws, { header: 1 });
+    return (rows[0] || []).map((h: any) => h?.toString() ?? '');
+  }
+
+  private findColumnKey(headers: string[], candidates: string[]): string | null {
+    const normalize = (s: string) =>
+      s.toLowerCase().trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    for (const header of headers) {
+      const norm = normalize(header?.toString() ?? '');
+      if (candidates.some(c => norm.includes(normalize(c)))) return header;
+    }
+    return null;
+  }
+
+
+  private buscarNomenclatura(especialidad: string, catalogos: Catalogo[]): string {
+    let mejorPuntaje = 0;
+    let mejorNomenclatura = especialidad + ' no existe en catalogo';
+    for (const cat of catalogos) {
+      const puntaje = this.similaridad(especialidad, cat.descripcion);
+      if (puntaje > mejorPuntaje) {
+        mejorPuntaje = puntaje;
+        mejorNomenclatura = cat.nomenclatura;
+      }
+    }
+
+    if (mejorPuntaje < 0.5) {
+      return `SIN_CATALOGO(${especialidad})`;
+    }
+    return mejorNomenclatura;
+  }
+
+private similaridad(txt1: string, txt2: string): number {
+  const limpiar = (s: string) =>
+    s.toLowerCase().trim()
+     .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+     .replace(/\s+/g, ' ');
+  const a = limpiar(txt1);
+  const b = limpiar(txt2);
+  if (!a || !b) return 0;
+
+  const palabrasA = a.split(' ');
+  const palabrasB = b.split(' ');
+
+  // Palabras de A que están en B
+  const coincidencias = palabrasA.filter(p => b.includes(p)).length;
+  const puntajeAenB = coincidencias / palabrasA.length;
+
+  // Palabras de B que están en A (penaliza si B tiene palabras extra)
+  const coincidenciasB = palabrasB.filter(p => a.includes(p)).length;
+  const puntajeBenA = coincidenciasB / palabrasB.length;
+
+  // Promedio de ambos: premia coincidencia total en ambas direcciones
+  return (puntajeAenB + puntajeBenA) / 2;
+}
+
+  private generarConsultorio(
+    nomenclatura: string,
+    nombreMedico: string,
+    registrosPrevios: { nomenclatura: string; nombre: string }[]
+  ): string {
+    // Quita el sufijo numérico que ya viene en la nomenclatura del catálogo
+    // Ej: "GIN_01" → "GIN"
+    const base = nomenclatura.replace(/_\d+$/, '');
+
+    const dict = new Map<string, number>();
+    let consecutivo = 1;
+
+    for (const r of registrosPrevios) {
+      const baseAnterior = r.nomenclatura.replace(/_\d+$/, '');
+      if (baseAnterior === base) {
+        if (!dict.has(r.nombre)) {
+          dict.set(r.nombre, consecutivo++);
+        }
+      }
+    }
+
+    if (dict.has(nombreMedico)) {
+      return `${base}_${String(dict.get(nombreMedico)!).padStart(2, '0')}`;
+    }
+    return `${base}_${String(consecutivo).padStart(2, '0')}`;
+  }
+
+private formatearHora(valor: string): string {
+  if (!valor) return '';
+  // Si ya viene como "HH:mm" lo devuelve igual
+  if (valor.includes(':')) return valor;
+  // Si viene como decimal de Excel
+  const num = parseFloat(valor);
+  if (!isNaN(num) && num < 1) {
+    const totalMinutos = Math.round(num * 24 * 60);
+    const horas   = Math.floor(totalMinutos / 60);
+    const minutos = totalMinutos % 60;
+    return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`;
+  }
+  return valor;
+}
+
+  private generarHorarioCitas(inicioStr: string, finStr: string, intervaloStr: string): string {
+    const toDecimal = (s: string): number => {
+      if (!s) return NaN;
+      // Si ya es número decimal de Excel (ej: 0.375)
+      const num = parseFloat(s);
+      if (!isNaN(num) && !s.includes(':')) return num;
+      // Si viene como "HH:mm" lo convierte a fracción del día
+      const partes = s.split(':');
+      if (partes.length < 2) return NaN;
+      const horas   = parseInt(partes[0]);
+      const minutos = parseInt(partes[1]);
+      return (horas * 60 + minutos) / (24 * 60);
+    };
+
+    const inicio    = toDecimal(inicioStr);
+    const fin       = toDecimal(finStr);
+    const intervalo = toDecimal(intervaloStr);
+
+    const inicioFmt = this.formatearHora(inicioStr);
+    const finFmt    = this.formatearHora(finStr);
+
+    if (isNaN(inicio) || isNaN(fin) || isNaN(intervalo) || intervalo === 0) {
+      return `${inicioFmt} - ${finFmt}`;
+    }
+
+    const residuo           = (fin - inicio) % intervalo;
+    const residuoRedondeado = Math.round(residuo * 1e10) / 1e10;
+
+    if (residuoRedondeado === 0) {
+      return `${inicioFmt} - ${finFmt}`;
+    }
+
+    const finCorregido    = fin + (intervalo - residuo);
+    const finCorregidoFmt = this.formatearHora(String(finCorregido));
+
+    return `${inicioFmt} - ⚠ HORARIOS DE CITAS NO CUADRA, POSIBLE ${finCorregidoFmt}`;
+  }
+
+  private obtenerTurno(valor: string): string {
+    const texto = valor.toUpperCase().trim();
+    if (texto === 'MATUTINO')   return 'MATUTINO';
+    if (texto === 'VESPERTINO') return 'VESPERTINO';
+    return 'JORNADA COMPLEMENTARIA';
+  }
+
+  private obtenerDiasConsulta(p: PersonalOperativo): string {
+    const dias = [
+      { valor: p.lunes,     inicial: 'L'  },
+      { valor: p.martes,    inicial: 'M'  },
+      { valor: p.miercoles, inicial: 'MI' },
+      { valor: p.jueves,    inicial: 'J'  },
+      { valor: p.viernes,   inicial: 'V'  },
+      { valor: p.sabado,    inicial: 'S'  },
+      { valor: p.domingo,   inicial: 'D'  },
+    ];
+    return dias
+      .filter(d => d.valor.toString().toUpperCase().trim() === 'X')
+      .map(d => d.inicial)
+      .join('-');
+  }
+}

@@ -1,0 +1,75 @@
+<div class="page-container">
+
+  <!-- Header -->
+  <header class="app-header">
+    <div class="header-icon">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="8" y1="13" x2="16" y2="13"/>
+        <line x1="8" y1="17" x2="16" y2="17"/>
+        <polyline points="10 9 9 9 8 9"/>
+      </svg>
+    </div>
+    <div>
+      <h1>Lector de Excel</h1>
+      <p class="header-sub">Sube tu archivo para extraer datos por hoja</p>
+    </div>
+  </header>
+
+  <!-- Zona de carga -->
+  <app-upload-zone (fileSelected)="onFileSelected($event)" />
+
+  <!-- Error -->
+  <div class="error-box" *ngIf="errorMsg">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/>
+      <line x1="12" y1="8" x2="12" y2="12"/>
+      <line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+    {{ errorMsg }}
+  </div>
+
+  <!-- Hojas detectadas -->
+  <div class="sheets-info" *ngIf="data?.allSheets?.length">
+    <span class="sheets-label">Hojas encontradas:</span>
+    <span
+      class="sheet-chip"
+      *ngFor="let s of data!.allSheets"
+      [class.active]="s.toLowerCase().includes('personal operativo') || s.toLowerCase().includes('alta usuario')">
+      {{ s }}
+    </span>
+  </div>
+
+  <!-- Resultados -->
+  <div class="results-stack" *ngIf="data">
+
+    <!-- Personal Operativo: todas las columnas -->
+    <app-data-table
+      title="Personal Operativo"
+      sheetName="PERSONAL OPERATIVO"
+      iconColor="purple"
+      [rows]="data.personalOperativo"
+      [columns]="columnsPersonal"
+      [availableHeaders]="data.rawHeaders['PERSONAL OPERATIVO'] || []"
+    />
+
+    <!-- Alta Usuarios: información procesada (nombre + apellidos) -->
+    <div class="table-actions">
+    <button class="btn-sort" (click)="ordenarAlfabeticamente()">
+      {{ ordenAscendente ? '↑ A → Z' : '↓ Z → A' }}
+      Ordenar por Consultorio
+    </button>
+  </div>
+    <app-data-table
+      title="Alta Usuarios — Información Procesada"
+      sheetName="Alta Usuarios Concentrado"
+      iconColor="teal"
+      [rows]="data.personasProcesadas"
+      [columns]="columnsProcesadas"
+      [availableHeaders]="data.rawHeaders['Alta Usuarios Concentrado'] || []"
+    />
+
+  </div>
+
+</div>
