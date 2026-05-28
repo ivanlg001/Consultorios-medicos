@@ -1,0 +1,17 @@
+.page-container {
+  max-width: 95%;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.page-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1a1a18;
+  margin: 0 0 1.25rem;
+}
+
+.empty {
+  color: #9e9e96;
+  font-size: 0.875rem;
+}

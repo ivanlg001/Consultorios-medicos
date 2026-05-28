@@ -1,0 +1,26 @@
+<div class="overlay" (click)="cerrar.emit()">
+  <div class="modal" (click)="$event.stopPropagation()">
+
+    <div class="modal-header">
+      <h3>Detalle del registro</h3>
+      <button class="btn-revisado"
+            [class.activo]="row?.revisado"
+            (click)="toggleRevisado.emit()"
+            [title]="row?.revisado ? 'Marcar como no revisado' : 'Marcar como revisado'">
+      ✓ {{ row?.revisado ? 'Revisado' : 'Marcar revisado' }}
+    </button>
+      <button class="btn-close" (click)="cerrar.emit()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="field" *ngFor="let col of columns">
+        <span class="field-label">{{ col.label }}</span>
+        <span class="field-value"
+              [class.cell-alert]="row[col.key]?.toString().includes('SIN_CATALOGO')">
+          {{ row[col.key] || '—' }}
+        </span>
+      </div>
+    </div>
+
+  </div>
+</div>

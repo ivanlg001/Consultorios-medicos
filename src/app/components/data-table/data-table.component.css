@@ -126,3 +126,22 @@ td.idx {
   font-weight: 500;
   white-space: nowrap;
 }
+
+tr.clickable {
+  cursor: pointer;
+}
+
+tr.clickable:hover td {
+  background: #eef7f2;
+}
+
+tr.revisado td {
+  background: #f0faf5;
+  color: #555;
+}
+
+.check-mark {
+  color: #1a4d3a;
+  font-weight: 700;
+  margin-left: 4px;
+}

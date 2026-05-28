@@ -40,6 +40,8 @@ export interface PersonaProcesada {
   turno: string;
   tipoVisita: string;  
   diasConsulta: string;
+  revisado: boolean;
+  ocasionServicio: string;
 }
 
 export interface SheetData {
@@ -53,3 +55,4 @@ export interface Catalogo {
   descripcion: string;
   nomenclatura: string;
 }
+

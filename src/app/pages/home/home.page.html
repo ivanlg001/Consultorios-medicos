@@ -30,29 +30,10 @@
     {{ errorMsg }}
   </div>
 
-  <!-- Hojas detectadas -->
-  <div class="sheets-info" *ngIf="data?.allSheets?.length">
-    <span class="sheets-label">Hojas encontradas:</span>
-    <span
-      class="sheet-chip"
-      *ngFor="let s of data!.allSheets"
-      [class.active]="s.toLowerCase().includes('personal operativo') || s.toLowerCase().includes('alta usuario')">
-      {{ s }}
-    </span>
-  </div>
+  
 
   <!-- Resultados -->
-  <div class="results-stack" *ngIf="data">
-
-    <!-- Personal Operativo: todas las columnas -->
-    <app-data-table
-      title="Personal Operativo"
-      sheetName="PERSONAL OPERATIVO"
-      iconColor="purple"
-      [rows]="data.personalOperativo"
-      [columns]="columnsPersonal"
-      [availableHeaders]="data.rawHeaders['PERSONAL OPERATIVO'] || []"
-    />
+  <div class="results-stack" *ngIf="state.data">
 
     <!-- Alta Usuarios: información procesada (nombre + apellidos) -->
     <div class="table-actions">
@@ -65,11 +46,20 @@
       title="Alta Usuarios — Información Procesada"
       sheetName="Alta Usuarios Concentrado"
       iconColor="teal"
-      [rows]="data.personasProcesadas"
+      [rows]="state.data.personasProcesadas"
       [columns]="columnsProcesadas"
-      [availableHeaders]="data.rawHeaders['Alta Usuarios Concentrado'] || []"
-    />
+      [availableHeaders]="state.data.rawHeaders['Alta Usuarios Concentrado'] || []"
+      (rowClick)="selectedRow = $event"
+      />
 
   </div>
 
 </div>
+
+<app-modal
+  *ngIf="selectedRow"
+  [row]="selectedRow"
+  [columns]="columnsProcesadas"
+  (cerrar)="selectedRow = null"
+  (toggleRevisado)="selectedRow.revisado = !selectedRow.revisado" 
+/>

@@ -149,6 +149,8 @@ export class ExcelReaderService {
       turno:    this.obtenerTurno(p.turno),
       tipoVisita:   'CONSULTORIO',
       diasConsulta: this.obtenerDiasConsulta(p),
+      revisado: false,
+      ocasionServicio: p.ocasionServicio,
     });
 }
 

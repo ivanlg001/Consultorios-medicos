@@ -4,17 +4,20 @@ import { ExcelReaderService } from '../../services/excel-reader.service';
 import { SheetData } from '../../models/excel.models';
 import { UploadZoneComponent } from '../../components/upload-zone/upload-zone.component';
 import { DataTableComponent } from '../../components/data-table/data-table.component';
+import { ExcelStateService } from '../../services/excel-state.service';
+import { ModalComponent } from '../../components/modal/modal.component';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [CommonModule, UploadZoneComponent, DataTableComponent],
+  imports: [CommonModule, UploadZoneComponent, DataTableComponent, ModalComponent],
   templateUrl: './home.page.html',
   styleUrl: './home.page.css'
 })
 export class HomePage {
   errorMsg = '';
   data: SheetData | null = null;
+  selectedRow: any = null;
 
   // Todas las columnas de Personal Operativo
   columnsPersonal = [
@@ -52,6 +55,7 @@ export class HomePage {
     { label: 'Horario Atención',    key: 'horarioAtencion'   },
     { label: 'Horario Citas',       key: 'horarioCitas' },
     { label: 'Intervalo',           key: 'intervalo'      },
+    { label: 'Ocasión Servicio', key: 'ocasionServicio' },
     { label: 'Nombre Completo',     key: 'nombreCompleto'   },
     { label: 'Sub Rol',  key: 'subRol' }, 
     { label: 'Turno',    key: 'turno'  }, 
@@ -62,29 +66,35 @@ export class HomePage {
     //{ label: 'Apellido Materno', key: 'apellidoMaterno'  },
   ];
 
-  constructor(private excelService: ExcelReaderService) {}
+
+  constructor(
+    private excelService: ExcelReaderService,
+    public state: ExcelStateService
+  ) {}
 
   alertasSinCatalogo: string[] = [];
 
+
   async onFileSelected(file: File) {
-    this.errorMsg = '';
-    this.data = null;
-    try {
-      this.data = await this.excelService.readFile(file);
-      this.alertasSinCatalogo = this.data.personasProcesadas
-        .filter(p => p.consultorio.includes('SIN_CATALOGO'))
-        .map(p => `${p.nombreCompleto} — ${p.consultorioFisico}`);
-    } catch (err: any) {
-      this.errorMsg = err.message;
-    }
+  this.errorMsg = '';
+  this.state.data = null;
+  this.alertasSinCatalogo = [];
+  try {
+    this.state.data = await this.excelService.readFile(file);
+    this.alertasSinCatalogo = this.state.data.personasProcesadas
+      .filter(p => p.consultorio.includes('SIN_CATALOGO'))
+      .map(p => `${p.nombreCompleto} — ${p.consultorioFisico}`);
+  } catch (err: any) {
+    this.errorMsg = err.message;
   }
+}
 
   ordenAscendente = true;
 
   ordenarAlfabeticamente() {
-    if (!this.data) return;
+    if (!this.state.data) return;
     this.ordenAscendente = !this.ordenAscendente;
-    this.data.personasProcesadas.sort((a, b) =>
+    this.state.data.personasProcesadas.sort((a, b) =>
       this.ordenAscendente
         ? a.consultorio.localeCompare(b.consultorio)
         : b.consultorio.localeCompare(a.consultorio)

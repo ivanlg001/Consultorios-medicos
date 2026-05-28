@@ -1,0 +1,24 @@
+<div class="page-container">
+  <h2 class="page-title">Personal Operativo</h2>
+  <div *ngIf="!state.data">
+    <p class="empty">Sube un archivo desde la página principal.</p>
+  </div>
+  <app-data-table
+    *ngIf="state.data"
+    title="Personal Operativo"
+    sheetName="PERSONAL OPERATIVO"
+    iconColor="purple"
+    [rows]="state.data.personalOperativo"
+    [columns]="columnsPersonal"
+    [availableHeaders]="state.data.rawHeaders['PERSONAL OPERATIVO'] || []"
+    (rowClick)="selectedRow = $event"
+    />
+</div>
+
+<app-modal
+  *ngIf="selectedRow"
+  [row]="selectedRow"
+  [columns]="columnsPersonal"
+  (cerrar)="selectedRow = null"
+  (toggleRevisado)="selectedRow.revisado = !selectedRow.revisado"
+/>
