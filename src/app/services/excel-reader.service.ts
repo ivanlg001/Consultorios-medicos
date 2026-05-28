@@ -267,15 +267,14 @@ private formatearHora(valor: string): string {
   private generarHorarioCitas(inicioStr: string, finStr: string, intervaloStr: string): string {
     const toDecimal = (s: string): number => {
       if (!s) return NaN;
-      // Si ya es número decimal de Excel (ej: 0.375)
-      const num = parseFloat(s);
-      if (!isNaN(num) && !s.includes(':')) return num;
-      // Si viene como "HH:mm" lo convierte a fracción del día
-      const partes = s.split(':');
+      const limpio = s.replace(/[a-zA-Z\s]+$/i, '').trim();
+      const num = parseFloat(limpio);
+      if (!isNaN(num) && !limpio.includes(':')) return num;
+      const partes = limpio.split(':');
       if (partes.length < 2) return NaN;
       const horas   = parseInt(partes[0]);
       const minutos = parseInt(partes[1]);
-      return (horas * 60 + minutos) / (24 * 60);
+      return Math.round(horas * 60 + minutos) / 1440;
     };
 
     const inicio    = toDecimal(inicioStr);
@@ -289,15 +288,19 @@ private formatearHora(valor: string): string {
       return `${inicioFmt} - ${finFmt}`;
     }
 
-    const residuo           = (fin - inicio) % intervalo;
-    const residuoRedondeado = Math.round(residuo * 1e10) / 1e10;
+    // Trabaja en minutos enteros para evitar errores de punto flotante
+    const inicioMin    = Math.round(inicio * 1440);
+    const finMin       = Math.round(fin * 1440);
+    const intervaloMin = Math.round(intervalo * 1440);
 
-    if (residuoRedondeado === 0) {
+    const residuoMin = (finMin - inicioMin) % intervaloMin;
+
+    if (residuoMin === 0) {
       return `${inicioFmt} - ${finFmt}`;
     }
 
-    const finCorregido    = fin + (intervalo - residuo);
-    const finCorregidoFmt = this.formatearHora(String(finCorregido));
+    const finCorregidoMin = finMin + (intervaloMin - residuoMin);
+    const finCorregidoFmt = this.formatearHora(String(finCorregidoMin / 1440));
 
     return `${inicioFmt} - ⚠ HORARIOS DE CITAS NO CUADRA, POSIBLE ${finCorregidoFmt}`;
   }
