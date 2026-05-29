@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import * as XLSX from 'xlsx';
 import { SheetData, PersonalOperativo, PersonaProcesada, Catalogo } from '../models/excel.models';
+import { CATALOGO_ESPECIALIDADES } from '../data/catalogos.data';
 
 @Injectable({ providedIn: 'root' })
 export class ExcelReaderService {
@@ -103,18 +104,9 @@ export class ExcelReaderService {
         domingo:             r[keys.domingo]            || '',
       }));
 
-    // Hoja: Catalogos → descripción y nomenclatura
-    const catSheetName = allSheets.find(s => s.toLowerCase().includes('catalogo')) ?? '';
-    const catRows = this.sheetToRows(wb, catSheetName);
-    const catHeaders = Object.keys(catRows[0] ?? {});
-    const catDesc = this.findColumnKey(catHeaders, ['descripcion', 'descripción', 'especialidad']) ?? '';
-    const catNom  = this.findColumnKey(catHeaders, ['nomenclatura']) ?? '';
-    const catalogos: Catalogo[] = catRows
-      .filter(r => r[catDesc])
-      .map(r => ({
-        descripcion:  r[catDesc] || '',
-        nomenclatura: r[catNom]  || '',
-      }));
+    // Catálogo incorporado al código (antes se leía de la hoja "Catalogos" del Excel).
+    // Se conserva como variable local para no modificar la firma de los métodos que lo consumen.
+    const catalogos: Catalogo[] = CATALOGO_ESPECIALIDADES.map(c => ({ ...c }));
     // Información procesada: viene de PERSONAL OPERATIVO
   // const personasProcesadas: PersonaProcesada[] = personalOperativo
   //   .filter(p => p.nombre.trim() !== '')
