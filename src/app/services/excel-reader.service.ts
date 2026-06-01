@@ -257,11 +257,21 @@ private formatearHora(valor: string): string {
 }
 
   private generarHorarioCitas(inicioStr: string, finStr: string, intervaloStr: string): string {
-    const toDecimal = (s: string): number => {
-      if (!s) return NaN;
-      const limpio = s.replace(/[a-zA-Z\s]+$/i, '').trim();
+    // Convierte una cadena de tiempo a fraccion de dia (formato decimal de Excel).
+    // - "7:30" / "07:30" / "7:30 AM" / "0:45" -> se parsean como h:mm.
+    // - "0.3125" (decimal de Excel < 1)       -> se interpreta como fraccion de dia.
+    // - "45", "20" (numero entero >= 1)       -> se interpreta como minutos solo si
+    //                                            interpretarComoMinutos=true (caso intervalo).
+    // Para las horas de inicio/fin no se asume nada cuando viene un numero plano,
+    // porque seria ambiguo (p.ej. "7" podria ser 7:00 o 7 minutos).
+    const toDecimal = (s: string, interpretarComoMinutos = false): number => {
+      if (s === null || s === undefined || s === '') return NaN;
+      const limpio = String(s).replace(/[a-zA-Z\s]+$/i, '').trim();
       const num = parseFloat(limpio);
-      if (!isNaN(num) && !limpio.includes(':')) return num;
+      if (!isNaN(num) && !limpio.includes(':')) {
+        if (interpretarComoMinutos && num >= 1) return num / 1440;
+        return num;
+      }
       const partes = limpio.split(':');
       if (partes.length < 2) return NaN;
       const horas   = parseInt(partes[0]);
@@ -271,7 +281,7 @@ private formatearHora(valor: string): string {
 
     const inicio    = toDecimal(inicioStr);
     const fin       = toDecimal(finStr);
-    const intervalo = toDecimal(intervaloStr);
+    const intervalo = toDecimal(intervaloStr, true);
 
     const inicioFmt = this.formatearHora(inicioStr);
     const finFmt    = this.formatearHora(finStr);
@@ -285,13 +295,28 @@ private formatearHora(valor: string): string {
     const finMin       = Math.round(fin * 1440);
     const intervaloMin = Math.round(intervalo * 1440);
 
-    const residuoMin = (finMin - inicioMin) % intervaloMin;
+    // Guarda contra datos inconsistentes (intervalo no positivo, mayor o igual a la
+    // duracion total, o que produciria una hora corregida fuera de un dia). No marca
+    // el warning: muestra el rango tal cual.
+    const duracionMin = finMin - inicioMin;
+    if (intervaloMin <= 0 || duracionMin <= 0 || intervaloMin >= duracionMin) {
+      return `${inicioFmt} - ${finFmt}`;
+    }
+
+    const residuoMin = duracionMin % intervaloMin;
 
     if (residuoMin === 0) {
       return `${inicioFmt} - ${finFmt}`;
     }
 
     const finCorregidoMin = finMin + (intervaloMin - residuoMin);
+
+    // Si la hora corregida cae fuera de un dia (24h) algo esta mal con los datos;
+    // mejor no inventar una sugerencia. Mostrar el rango sin warning.
+    if (finCorregidoMin >= 1440) {
+      return `${inicioFmt} - ${finFmt}`;
+    }
+
     const finCorregidoFmt = this.formatearHora(String(finCorregidoMin / 1440));
 
     return `${inicioFmt} - ⚠ HORARIOS DE CITAS NO CUADRA, POSIBLE ${finCorregidoFmt}`;
