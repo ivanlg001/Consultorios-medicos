@@ -1,165 +1,455 @@
-# Consultorios Médicos — Lector de Excel (MoCE)
+# Consultorios Médicos — Lector de Excel
 
-Aplicación web en **Angular 18** que lee el archivo Excel del **Personal Operativo** del IMSS y genera la información procesada para el alta de consultorios (ECE IMSS – MoCE): nomenclatura del consultorio, horarios de atención, horarios de citas con validación del intervalo, turnos y días de consulta.
+Aplicación web en **Angular 18** para cargar y visualizar archivos Excel (`.xlsx`, `.xls`). Incluye vistas para inicio y **Personal operativo**.
 
-El catálogo de especialidades (descripción → nomenclatura del consultorio) está **incorporado en el código** en `src/app/data/catalogos.data.ts`, por lo que los archivos Excel que se carguen **ya no necesitan traer la pestaña `Catalogos`**; basta con que tengan la hoja `PERSONAL OPERATIVO`.
+Esta guía cubre la instalación completa desde cero: **Node.js**, **Git**, **Visual Studio Code**, ejecución local y ejecución con **Docker**.
 
 ---
 
-## Requisitos
+## Tabla de contenidos
 
-- **Node.js** ≥ 18.19 (probado con `v22.x`)
-- **npm** ≥ 9 (incluido con Node)
-- Navegador moderno (Chrome, Edge, Firefox)
+1. [Resumen de herramientas](#resumen-de-herramientas)
+2. [Instalar Node.js y npm](#1-instalar-nodejs-y-npm)
+3. [Instalar Git](#2-instalar-git)
+4. [Instalar Visual Studio Code](#3-instalar-visual-studio-code)
+5. [Clonar el proyecto](#4-clonar-el-proyecto)
+6. [Instalar dependencias y ejecutar en local](#5-instalar-dependencias-y-ejecutar-en-local)
+7. [Desarrollo con VS Code](#6-desarrollo-con-vs-code)
+8. [Instalar Docker (opcional)](#7-instalar-docker-opcional)
+9. [Ejecutar con Docker](#8-ejecutar-con-docker)
+10. [Estructura del proyecto](#estructura-del-proyecto)
+11. [Solución de problemas](#solución-de-problemas)
+12. [Tecnologías](#tecnologías)
 
-Para verificar:
+---
+
+## Resumen de herramientas
+
+| Herramienta | Versión recomendada | Obligatorio para… |
+|-------------|---------------------|-------------------|
+| **Node.js** | **20.x LTS** (mínimo 18.19+) | Desarrollo local |
+| **npm** | Viene con Node.js | Instalar paquetes y scripts |
+| **Git** | Última estable | Clonar y actualizar el código |
+| **VS Code** | Última estable | Editar y depurar (recomendado) |
+| **Edge o Chrome** | Actual | Ver la app y depurar |
+| **Docker Desktop** | 24+ | Ejecutar sin instalar Node en la máquina |
+
+---
+
+## 1. Instalar Node.js y npm
+
+Node.js incluye **npm** (gestor de paquetes). Este proyecto usa **Angular 18**, que requiere Node **18.19+** o **20+**. Se recomienda la rama **20 LTS**.
+
+### Windows
+
+1. Entra en [https://nodejs.org/](https://nodejs.org/).
+2. Descarga el instalador **LTS** (20.x).
+3. Ejecuta el `.msi` y acepta las opciones por defecto (incluye **Add to PATH**).
+4. Cierra y vuelve a abrir **PowerShell**, **CMD** o la terminal de VS Code.
+
+### macOS
+
+**Opción A — Instalador oficial**
+
+1. Descarga el `.pkg` LTS desde [nodejs.org](https://nodejs.org/).
+2. Instálalo y reinicia la terminal.
+
+**Opción B — Homebrew**
 
 ```bash
-node --version
-npm --version
+brew install node@20
+```
+
+### Linux (Debian/Ubuntu)
+
+```bash
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt-get install -y nodejs
+```
+
+### Verificar la instalación
+
+En una terminal nueva:
+
+```bash
+node -v
+# Debe mostrar v20.x.x (o v18.19+ como mínimo)
+
+npm -v
+# Debe mostrar 10.x.x o similar
+```
+
+Si `node` no se reconoce en Windows, reinicia el equipo o comprueba que la ruta de Node esté en las variables de entorno **PATH**.
+
+---
+
+## 2. Instalar Git
+
+Git sirve para clonar el repositorio y recibir actualizaciones.
+
+### Windows
+
+1. Descarga [Git for Windows](https://git-scm.com/download/win).
+2. Instala con las opciones por defecto.
+3. Usa **Git Bash**, **PowerShell** o la terminal integrada de VS Code.
+
+### macOS
+
+```bash
+# Con Homebrew
+brew install git
+
+# O instala Xcode Command Line Tools
+xcode-select --install
+```
+
+### Linux
+
+```bash
+sudo apt-get update
+sudo apt-get install git
+```
+
+### Verificar
+
+```bash
+git --version
+```
+
+### Configuración inicial (solo la primera vez)
+
+```bash
+git config --global user.name "Tu Nombre"
+git config --global user.email "tu@correo.com"
 ```
 
 ---
 
-## Instalación
+## 3. Instalar Visual Studio Code
 
-Clona el repositorio (o entra a la carpeta del proyecto) y ejecuta:
+1. Descarga VS Code desde [https://code.visualstudio.com/](https://code.visualstudio.com/).
+2. Instálalo en tu sistema.
+3. Abre VS Code y ve a **Extensiones** (`Ctrl+Shift+X` / `Cmd+Shift+X`).
+4. Instala estas extensiones recomendadas:
+
+| Extensión | ID en Marketplace | Para qué sirve |
+|-----------|-------------------|----------------|
+| **Angular Language Service** | `Angular.ng-template` | Autocompletado y errores en plantillas `.html` |
+| **ESLint** (opcional) | `dbaeumer.vscode-eslint` | Linting de TypeScript |
+| **Docker** (opcional) | `ms-azuretools.vscode-docker` | Gestionar contenedores desde el editor |
+
+5. Para depurar con F5, necesitas **Microsoft Edge** o **Google Chrome** instalados en el sistema.
+
+---
+
+## 4. Clonar el proyecto
+
+Abre una terminal en la carpeta donde quieras guardar el código (por ejemplo `Documentos` o `Proyectos`).
+
+```bash
+git clone https://github.com/ivanlg001/Consultorios-medicos.git
+cd Consultorios-medicos
+```
+
+Si ya tienes la carpeta sin clonar (copia local), entra en ella:
+
+```bash
+cd "ruta\a\Consultorios medicos"
+```
+
+> En Windows, si la ruta tiene espacios, usa comillas como en el ejemplo anterior.
+
+---
+
+## 5. Instalar dependencias y ejecutar en local
+
+Desde la **raíz del proyecto** (donde está `package.json`):
+
+### Paso 1 — Instalar paquetes de Node
 
 ```bash
 npm install
 ```
 
-Esto descarga las dependencias declaradas en `package.json`, incluyendo `@angular/*`, `xlsx`, `rxjs` y `zone.js`.
+Esto descarga Angular, TypeScript, `xlsx` y el resto de dependencias en la carpeta `node_modules/`. La primera vez puede tardar varios minutos según tu conexión.
 
----
-
-## Cómo correr el proyecto
-
-### Modo desarrollo (servidor local con recarga en caliente)
+### Paso 2 — Iniciar el servidor de desarrollo
 
 ```bash
 npm start
 ```
 
-o equivalentemente:
+Es equivalente a `ng serve`. Cuando veas un mensaje similar a:
 
-```bash
-npx ng serve
+```text
+Application bundle generation complete.
+Local:   http://localhost:4200/
 ```
 
-Esto compila el proyecto y levanta un servidor en **http://localhost:4200/**. Abre esa URL en tu navegador; al guardar cambios en el código, la página se recarga automáticamente.
+Abre el navegador en:
 
-> Si el puerto 4200 está ocupado, puedes usar otro: `npx ng serve --port 4300`.
+**http://localhost:4200**
 
-### Build de producción
+### Rutas de la aplicación
 
-Para generar los archivos estáticos optimizados:
+| URL | Vista |
+|-----|--------|
+| http://localhost:4200/ | Inicio |
+| http://localhost:4200/personal-operativo | Personal operativo |
+
+### Paso 3 — Detener el servidor
+
+En la terminal donde corre `npm start`, pulsa **`Ctrl + C`**.
+
+### Otros comandos npm
 
 ```bash
+# Compilar versión de producción (carpeta dist/consultorios-medicos/)
 npm run build
+
+# Compilar en modo watch (desarrollo, sin servidor)
+npm run watch
+
+# Servidor en otro puerto si 4200 está ocupado
+npx ng serve --port 4300
 ```
 
-La salida queda en la carpeta `dist/excel-reader/`. Esos archivos se pueden servir desde cualquier servidor estático (IIS, Nginx, GitHub Pages, etc.).
+---
 
-### Build de desarrollo en modo *watch*
+## 6. Desarrollo con VS Code
 
-Recompila al detectar cambios pero sin levantar un servidor:
+### Abrir el proyecto
+
+1. Abre **Visual Studio Code**.
+2. **Archivo → Abrir carpeta…** (`Ctrl+K Ctrl+O`).
+3. Selecciona la carpeta raíz del proyecto (la que contiene `package.json` y `angular.json`).
+
+### Terminal integrada
+
+1. **Terminal → Nueva terminal** (`` Ctrl+` ``).
+2. Comprueba que estás en la raíz del proyecto.
+3. Ejecuta:
 
 ```bash
-npm run watch
+npm install   # solo si aún no lo hiciste
+npm start
+```
+
+### Depurar en el navegador (F5)
+
+El proyecto incluye `.vscode/launch.json` con la configuración **Debug Angular**.
+
+1. Deja `npm start` en ejecución (`http://localhost:4200`).
+2. En VS Code: **Ejecutar y depurar** (`Ctrl+Shift+D`).
+3. Elige **Debug Angular** y pulsa **F5** (o el botón de play verde).
+4. Se abrirá **Microsoft Edge** en `http://localhost:4200` con el depurador adjunto.
+
+Puedes poner breakpoints en archivos `.ts` desde el editor.
+
+### Flujo de trabajo habitual
+
+```text
+1. npm start          → servidor en segundo plano
+2. Editar src/        → la app se recarga sola (hot reload)
+3. F5 (opcional)      → depurar en Edge
+4. Ctrl+C en terminal → parar el servidor
 ```
 
 ---
 
-## Uso de la aplicación
+## 7. Instalar Docker (opcional)
 
-1. Inicia el servidor (`npm start`) y abre **http://localhost:4200/**.
-2. En la página principal, arrastra o selecciona un archivo `.xlsx` que contenga la hoja **`PERSONAL OPERATIVO`** con las columnas habituales (Entidad Federativa, CLUES, Especialidad, Nombre, Apellido Paterno, Apellido Materno, Hora Inicio/Fin Atención, Hora Inicio/Fin Cita, Intervalo, Ocasión Servicio, Lunes…Domingo, etc.).
-3. El sistema muestra dos vistas:
-   - **Personal Operativo**: tal cual viene del Excel.
-   - **Información procesada**: nombre completo, **nomenclatura del consultorio** (asignada a partir del catálogo interno), horario de atención, horario de citas (con alerta si el intervalo no cuadra), turno, días de consulta, etc.
-4. Si alguna especialidad del Excel no se parece lo suficiente a ninguna descripción del catálogo, aparece en la lista de **alertas “Sin catálogo”** con el valor `SIN_CATALOGO(...)`.
+Docker permite ejecutar la aplicación **ya compilada** con Nginx, sin instalar Node.js en tu PC (útil para pruebas de producción o despliegue local).
 
-La hoja `Catalogos` que pudiera venir incluida en el Excel **se ignora**; el catálogo activo es siempre el del código.
+### Windows
+
+1. Requisitos: Windows 10/11 64 bits, virtualización habilitada en BIOS/UEFI.
+2. Descarga [Docker Desktop para Windows](https://www.docker.com/products/docker-desktop/).
+3. Instala y reinicia si lo pide el asistente.
+4. Abre **Docker Desktop** y espera a que indique que Docker está en ejecución.
+5. En PowerShell:
+
+```bash
+docker --version
+docker compose version
+```
+
+### macOS
+
+1. [Docker Desktop para Mac](https://www.docker.com/products/docker-desktop/) (Apple Silicon o Intel según tu equipo).
+2. Verifica con `docker --version`.
+
+### Linux
+
+Sigue la guía oficial: [Install Docker Engine](https://docs.docker.com/engine/install/).
 
 ---
 
-## Estructura principal del código
+## 8. Ejecutar con Docker
 
-```
-src/
-└── app/
-    ├── app.component.ts
-    ├── app.config.ts
-    ├── app.routes.ts                              # / y /personal-operativo
-    ├── components/
-    │   ├── upload-zone/                           # Selector / drop de archivos
-    │   ├── data-table/                            # Tabla genérica
-    │   └── modal/                                 # Detalle por fila
-    ├── data/
-    │   └── catalogos.data.ts                      # Catálogo embebido (274 entradas)
-    ├── models/
-    │   └── excel.models.ts                        # Interfaces: PersonalOperativo,
-    │                                              # PersonaProcesada, Catalogo, SheetData
-    ├── pages/
-    │   ├── home/                                  # Pantalla principal y alertas
-    │   └── personal-operativo/                    # Vista de la hoja PERSONAL OPERATIVO
-    └── services/
-        ├── excel-reader.service.ts                # Lectura del .xlsx + procesamiento
-        └── excel-state.service.ts                 # Estado compartido entre rutas
+La imagen hace un **build multi-etapa**: compila con **Node 20** y sirve los archivos estáticos con **Nginx** en el puerto **80** del contenedor.
+
+### Opción A — Docker Compose (recomendado)
+
+Desde la raíz del proyecto:
+
+```bash
+# Construir y levantar en segundo plano
+docker compose up --build -d
+
+# Ver logs
+docker compose logs -f
+
+# Detener y eliminar contenedores
+docker compose down
 ```
 
-Archivos clave si quieres modificar el comportamiento:
+La app queda en:
 
-- **`src/app/data/catalogos.data.ts`** — añadir o ajustar entradas del catálogo (descripción + nomenclatura). Se respeta el tipo `Catalogo` definido en `excel.models.ts`.
-- **`src/app/services/excel-reader.service.ts`** — lectura del Excel, normalización de encabezados, matching por similitud (`buscarNomenclatura`), generación del nombre del consultorio (`generarConsultorio`), formateo de horas (`formatearHora`), validación de horario de citas (`generarHorarioCitas`), determinación de turno y días.
+**http://localhost:8080**
+
+El archivo `docker-compose.yml` mapea el puerto **8080** de tu máquina al **80** del contenedor.
+
+### Opción B — Comandos Docker manuales
+
+```bash
+# Construir la imagen
+docker build -t consultorios-medicos .
+
+# Ejecutar (puerto local 8080 → 80 del contenedor)
+docker run --rm -p 8080:80 consultorios-medicos
+```
+
+Abre **http://localhost:8080**. Para detener: `Ctrl+C` en esa terminal.
+
+Otro puerto local:
+
+```bash
+docker run --rm -p 3000:80 consultorios-medicos
+# → http://localhost:3000
+```
+
+### Comparación: local vs Docker
+
+| | Desarrollo (`npm start`) | Docker |
+|--|--------------------------|--------|
+| **URL** | http://localhost:4200 | http://localhost:8080 |
+| **Recarga al editar código** | Sí | No (hay que reconstruir la imagen) |
+| **Necesita Node instalado** | Sí | No |
+| **Uso típico** | Programar y probar | Simular producción |
+
+Para aplicar cambios de código en Docker:
+
+```bash
+docker compose up --build -d
+```
 
 ---
 
-## Cómo actualizar el catálogo
+## Estructura del proyecto
 
-Si en el futuro cambia la lista oficial de especialidades / nomenclaturas:
+```text
+Consultorios medicos/
+├── src/                    # Código fuente Angular
+│   ├── app/
+│   │   ├── components/     # Componentes reutilizables
+│   │   ├── pages/          # Páginas (home, personal-operativo)
+│   │   ├── services/       # Lógica Excel y estado
+│   │   └── models/
+│   ├── index.html
+│   └── main.ts
+├── .vscode/
+│   └── launch.json         # Depuración F5
+├── angular.json            # Configuración Angular CLI
+├── package.json            # Dependencias y scripts
+├── package-lock.json       # Versiones bloqueadas de npm
+├── tsconfig.json           # TypeScript
+├── Dockerfile              # Build Node + Nginx
+├── docker-compose.yml      # Levantar con un comando
+├── nginx.conf              # Servidor en contenedor
+└── README.md               # Esta guía
+```
 
-1. Abre `src/app/data/catalogos.data.ts`.
-2. Agrega, edita o elimina entradas dentro del arreglo `CATALOGO_ESPECIALIDADES`. Cada entrada tiene la forma:
+Salida del build de producción:
 
-   ```ts
-   { descripcion: "Nombre de la especialidad", nomenclatura: "Codigo_Consult_01" },
-   ```
-
-3. Convención observada en el catálogo original: por cada descripción suelen registrarse **dos** entradas, una con sufijo `_01` (presencial) y otra con `_v01` (virtual).
-4. Guarda el archivo. Si el servidor de desarrollo está corriendo (`npm start`), Angular recompila automáticamente.
-
-> No es necesario tocar `excel-reader.service.ts`: el servicio ya importa `CATALOGO_ESPECIALIDADES` y lo usa internamente.
+```text
+dist/consultorios-medicos/browser/
+```
 
 ---
 
 ## Solución de problemas
 
-- **“No se pudo leer el archivo. Verifica que sea un Excel válido.”**: el archivo no es un `.xlsx` legible o está corrupto.
-- **No aparecen filas en *Información procesada***: revisa que la hoja se llame **`PERSONAL OPERATIVO`** y que la columna **`NOMBRE`** esté presente con datos.
-- **Muchas filas con `SIN_CATALOGO(...)`**: la especialidad del Excel no se parece (umbral 50% de similitud) a ninguna descripción del catálogo. Considera agregar la especialidad faltante a `catalogos.data.ts`.
-- **`⚠ HORARIOS DE CITAS NO CUADRA, POSIBLE HH:MM`**: el rango `Hora Inicio Cita → Hora Fin Cita` no es múltiplo exacto del **Intervalo**. La aplicación sugiere la hora de fin que sí cuadraría.
-- **Conflicto de versiones al instalar**: borra `node_modules/` y `package-lock.json` y vuelve a ejecutar `npm install`.
+### Node.js y npm
 
----
+| Problema | Solución |
+|----------|----------|
+| `'node' no se reconoce como comando` | Reinstala Node.js marcando **Add to PATH**, reinicia la terminal o el PC. |
+| Versión de Node demasiado antigua | Instala Node **20 LTS** desde [nodejs.org](https://nodejs.org/). |
+| `npm install` falla con errores de red | Revisa proxy/VPN; prueba `npm install --registry https://registry.npmjs.org/`. |
+| `EACCES` / permisos en Linux/macOS | No uses `sudo npm install` en el proyecto; corrige permisos de tu carpeta de usuario. |
 
-## Scripts disponibles
+### Angular y desarrollo local
 
-Definidos en `package.json`:
+| Problema | Solución |
+|----------|----------|
+| `ng: command not found` | Usa `npm start` o `npx ng serve` (el CLI está en `node_modules`). |
+| Puerto **4200** en uso | `npx ng serve --port 4300` o cierra la otra aplicación. |
+| Cambios no se ven en el navegador | Hard refresh: `Ctrl+Shift+R`; confirma que `npm start` sigue activo. |
+| Error tras `git pull` | Ejecuta de nuevo `npm install` por si cambió `package-lock.json`. |
 
-| Script           | Comando                              | Para qué sirve                                              |
-|------------------|--------------------------------------|-------------------------------------------------------------|
-| `npm start`      | `ng serve`                           | Servidor de desarrollo en http://localhost:4200/            |
-| `npm run build`  | `ng build`                           | Build de producción en `dist/excel-reader/`                 |
-| `npm run watch`  | `ng build --watch --configuration development` | Recompila al guardar cambios (sin servidor)        |
-| `npm run ng`     | `ng`                                 | Acceso directo al CLI de Angular                            |
+### Git
+
+| Problema | Solución |
+|----------|----------|
+| `git clone` pide usuario/contraseña | En GitHub usa un **Personal Access Token** en lugar de la contraseña, o configura SSH. |
+| Carpeta con espacios en Windows | Encierra la ruta entre comillas: `cd "Consultorios medicos"`. |
+
+### VS Code
+
+| Problema | Solución |
+|----------|----------|
+| F5 no abre el navegador | Instala Edge/Chrome; inicia antes `npm start`. |
+| Sin autocompletado en HTML | Instala la extensión **Angular Language Service**. |
+
+### Docker
+
+| Problema | Solución |
+|----------|----------|
+| `Cannot connect to the Docker daemon` | Abre **Docker Desktop** y espera a que esté listo. |
+| Build falla en `npm install` | Comprueba internet; no borres `package-lock.json`. |
+| Página en blanco o 404 al refrescar | Reconstruye: `docker compose up --build`; Nginx debe redirigir a `index.html`. |
+| Puerto **8080** ocupado | En `docker-compose.yml` cambia `"8080:80"` por `"9080:80"` y usa http://localhost:9080. |
 
 ---
 
 ## Tecnologías
 
-- [Angular 18](https://angular.dev/) (standalone components)
-- [SheetJS / xlsx](https://github.com/SheetJS/sheetjs) para leer archivos `.xlsx`
-- TypeScript 5.4
-- RxJS 7
+- [Angular](https://angular.dev/) 18
+- [TypeScript](https://www.typescriptlang.org/) 5.4
+- [SheetJS (xlsx)](https://sheetjs.com/) — lectura de archivos Excel
+- [Node.js](https://nodejs.org/) 20 — build y desarrollo
+- [Nginx](https://nginx.org/) — servidor en imagen Docker
+
+---
+
+## Inicio rápido (cheat sheet)
+
+**Solo desarrollo (con Node instalado):**
+
+```bash
+git clone https://github.com/ivanlg001/Consultorios-medicos.git
+cd Consultorios-medicos
+npm install
+npm start
+# → http://localhost:4200
+```
+
+**Solo Docker (sin Node en el equipo):**
+
+```bash
+git clone https://github.com/ivanlg001/Consultorios-medicos.git
+cd Consultorios-medicos
+docker compose up --build -d
+# → http://localhost:8080
+```
