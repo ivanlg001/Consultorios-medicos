@@ -33,6 +33,12 @@
               "extractLicenses": true,
               "sourceMap": false
             },
+            "electron": {
+              "baseHref": "./",
+              "optimization": true,
+              "extractLicenses": true,
+              "sourceMap": false
+            },
             "development": {
               "optimization": false,
               "extractLicenses": false,

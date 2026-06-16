@@ -1,11 +1,16 @@
 {
-  "name": "excel-reader",
-  "version": "0.0.0",
+  "name": "consultorios-medicos",
+  "version": "1.0.0",
+  "description": "Gestión de consultorios médicos",
+  "author": "EDS",
+  "main": "main.js",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "watch": "ng build --watch --configuration development"
+    "watch": "ng build --watch --configuration development",
+    "electron": "ng build --configuration electron && electron .",
+    "electron:build": "ng build --configuration electron && npx electron-builder build --win"
   },
   "private": true,
   "dependencies": {
@@ -26,6 +31,26 @@
     "@angular-devkit/build-angular": "^18.0.0",
     "@angular/cli": "^18.0.0",
     "@angular/compiler-cli": "^18.0.0",
+    "electron": "^42.4.0",
+    "electron-builder": "^26.15.3",
     "typescript": "~5.4.2"
+  },
+  "build": {
+    "appId": "com.eds.consultorios-medicos",
+    "productName": "Consultorios Medicos",
+    "files": [
+      "main.js",
+      "dist/consultorios-medicos/**/*"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "src/assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true
+    }
   }
 }
