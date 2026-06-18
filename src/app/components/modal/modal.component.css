@@ -120,3 +120,29 @@
 .btn-revisado.activo:hover {
   background: #d6ede3;
 }
+
+.errores-box {
+  margin: 0.75rem 1.5rem;
+  padding: 0.65rem 1rem;
+  background: #fff5f5;
+  border: 1px solid #fcc;
+  border-radius: 8px;
+}
+
+.errores-title {
+  margin: 0 0 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #a33;
+}
+
+.errores-box ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.errores-box li {
+  font-size: 0.82rem;
+  color: #a33;
+  margin-bottom: 0.2rem;
+}

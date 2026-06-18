@@ -6,6 +6,7 @@ import { UploadZoneComponent } from '../../components/upload-zone/upload-zone.co
 import { DataTableComponent } from '../../components/data-table/data-table.component';
 import { ExcelStateService } from '../../services/excel-state.service';
 import { ModalComponent } from '../../components/modal/modal.component';
+import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
   selector: 'app-home',
@@ -69,25 +70,34 @@ export class HomePage {
 
   constructor(
     private excelService: ExcelReaderService,
-    public state: ExcelStateService
+    public state: ExcelStateService,
+    private cdr: ChangeDetectorRef
   ) {}
 
   alertasSinCatalogo: string[] = [];
 
 
   async onFileSelected(file: File) {
-  this.errorMsg = '';
-  this.state.data = null;
-  this.alertasSinCatalogo = [];
-  try {
-    this.state.data = await this.excelService.readFile(file);
-    this.alertasSinCatalogo = this.state.data.personasProcesadas
-      .filter(p => p.consultorio.includes('SIN_CATALOGO'))
-      .map(p => `${p.nombreCompleto} — ${p.consultorioFisico}`);
-  } catch (err: any) {
-    this.errorMsg = err.message;
+
+     console.log("ENTRÓ AL PADRE", file.name);
+    this.errorMsg = '';
+    this.state.data = null;
+    this.alertasSinCatalogo = [];
+    try {
+      this.state.data = await this.excelService.readFile(file);
+      this.cdr.detectChanges();
+
+      console.log(this.state.data);
+      console.log(this.state.data.personasProcesadas);
+      console.log(this.state.data.personasProcesadas.length);
+      console.log("TERMINÓ DE LEER");
+      this.alertasSinCatalogo = this.state.data.personasProcesadas
+        .filter(p => p.errores.length > 0)
+        .map(p => `${p.nombreCompleto} — ${p.errores.join(', ')}`);
+    } catch (err: any) {
+      this.errorMsg = err.message;
+    }
   }
-}
 
   ordenAscendente = true;
 

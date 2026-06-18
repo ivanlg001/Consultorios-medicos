@@ -12,6 +12,13 @@
       <button class="btn-close" (click)="cerrar.emit()">✕</button>
     </div>
 
+    <div class="errores-box" *ngIf="row?.errores?.length > 0">
+      <p class="errores-title">⚠ Errores detectados</p>
+      <ul>
+        <li *ngFor="let e of row.errores">{{ e }}</li>
+      </ul>
+    </div>
+
     <div class="modal-body">
       <div class="field" *ngFor="let col of columns">
         <span class="field-label">{{ col.label }}</span>

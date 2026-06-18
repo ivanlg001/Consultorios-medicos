@@ -143,6 +143,10 @@ export class ExcelReaderService {
       diasConsulta: this.obtenerDiasConsulta(p),
       revisado: false,
       ocasionServicio: p.ocasionServicio,
+      errores: [
+          ...(consultorio.includes('SIN_CATALOGO') ? [`Especialidad sin catálogo: ${p.especialidad}`] : []),
+          ...(this.generarHorarioCitas(p.horaInicioCita, p.horaFinCita, p.intervaloConsulta).includes('⚠') ? ['Horario de citas no cuadra'] : []),
+        ],
     });
 }
 
@@ -319,7 +323,7 @@ private formatearHora(valor: string): string {
 
     const finCorregidoFmt = this.formatearHora(String(finCorregidoMin / 1440));
 
-    return `${inicioFmt} - ⚠ HORARIOS DE CITAS NO CUADRA, POSIBLE ${finCorregidoFmt}`;
+    return `${inicioFmt} - ${finFmt} ⚠ HORARIOS DE CITAS NO CUADRA, POSIBLE ${finCorregidoFmt}`;
   }
 
   private obtenerTurno(valor: string): string {
