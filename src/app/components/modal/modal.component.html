@@ -3,13 +3,18 @@
 
     <div class="modal-header">
       <h3>Detalle del registro</h3>
-      <button class="btn-revisado"
-            [class.activo]="row?.revisado"
-            (click)="toggleRevisado.emit()"
-            [title]="row?.revisado ? 'Marcar como no revisado' : 'Marcar como revisado'">
-      ✓ {{ row?.revisado ? 'Revisado' : 'Marcar revisado' }}
-    </button>
-      <button class="btn-close" (click)="cerrar.emit()">✕</button>
+      <div class="header-actions">
+        <button class="btn-revisado"
+              [class.activo]="row?.revisado"
+              (click)="toggleRevisado.emit()"
+              [title]="row?.revisado ? 'Marcar como no revisado' : 'Marcar como revisado'">
+          ✓ {{ row?.revisado ? 'Revisado' : 'Marcar revisado' }}
+        </button>
+        <button class="btn-edit" *ngIf="!modoEdicion" (click)="activarEdicion()">
+          ✎ Editar
+        </button>
+        <button class="btn-close" (click)="cerrar.emit()">✕</button>
+      </div>
     </div>
 
     <div class="errores-box" *ngIf="row?.errores?.length > 0">
@@ -19,7 +24,8 @@
       </ul>
     </div>
 
-    <div class="modal-body">
+    <!-- Modo lectura -->
+    <div class="modal-body" *ngIf="!modoEdicion">
       <div class="field" *ngFor="let col of columns">
         <span class="field-label">{{ col.label }}</span>
         <span class="field-value"
@@ -27,6 +33,19 @@
           {{ row[col.key] || '—' }}
         </span>
       </div>
+    </div>
+
+    <!-- Modo edición -->
+    <div class="modal-body" *ngIf="modoEdicion">
+      <div class="field" *ngFor="let col of columns">
+        <span class="field-label">{{ col.label }}</span>
+        <input class="field-input" [(ngModel)]="rowEditado[col.key]" [attr.aria-label]="col.label" [name]="col.key"/>
+      </div>
+    </div>
+
+    <div class="modal-footer" *ngIf="modoEdicion">
+      <button class="btn-cancel" (click)="cancelarEdicion()">Cancelar</button>
+      <button class="btn-save" (click)="guardarCambios()">Guardar cambios</button>
     </div>
 
   </div>

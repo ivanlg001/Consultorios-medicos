@@ -75,7 +75,7 @@ export class ExcelReaderService {
     };
 
     const personalOperativo: PersonalOperativo[] = poRows
-      .filter(r => keys.nombre && r[keys.nombre])
+      .filter(r => Object.values(r).some(v => v?.toString().trim() !== ''))  // descarta solo filas 100% vacías
       .map(r => ({
         entidadFederativa:   r[keys.entidadFederativa]  || '',
         cvePresupuestal:     r[keys.cvePresupuestal]    || '',
@@ -119,8 +119,11 @@ export class ExcelReaderService {
 
     const personasProcesadas: PersonaProcesada[] = [];
     for (const p of personalOperativo) {
-      if (!p.nombre.trim()) continue;
-      const nombreMedico = `${p.apellidoPaterno} ${p.apellidoMaterno} ${p.nombre}`.trim();
+      const sinNombre = !p.nombre.trim();
+      const nombreMedico = sinNombre
+        ? 'SIN NOMBRE'
+        : `${p.apellidoPaterno} ${p.apellidoMaterno} ${p.nombre}`.trim();
+
       const nomenclatura  = this.buscarNomenclatura(p.especialidad, catalogos);
       const consultorio   = this.generarConsultorio(
         nomenclatura,
@@ -130,12 +133,13 @@ export class ExcelReaderService {
       const horarioCitas = this.generarHorarioCitas(p.horaInicioCita, p.horaFinCita, p.intervaloConsulta);
 
       const errores: string[] = [
+        ...(sinNombre ? ['Registro sin nombre de médico'] : []),
         ...(consultorio.includes('SIN_CATALOGO') ? [`Especialidad sin catálogo: ${p.especialidad}`] : []),
         ...(horarioCitas.includes('⚠') ? ['Horario de citas no cuadra'] : []),
       ];
 
       personasProcesadas.push({
-        nombre:            p.nombre,
+        nombre:            sinNombre ? 'SIN NOMBRE' : p.nombre,
         apellidoPaterno:   p.apellidoPaterno,
         apellidoMaterno:   p.apellidoMaterno,
         nombreCompleto:    nombreMedico,

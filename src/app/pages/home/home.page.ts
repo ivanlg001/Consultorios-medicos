@@ -157,4 +157,16 @@ exportarExcel() {
   XLSX.writeFile(wb, 'informacion-procesada.xlsx');
 }
 
+guardarRow(rowEditado: any) {
+  if (!this.state.data) return;
+  const index = this.state.data.personasProcesadas.findIndex(
+    p => p === this.selectedRow
+  );
+  if (index !== -1) {
+    this.state.data.personasProcesadas[index] = rowEditado;
+    this.selectedRow = rowEditado;
+  }
+  this.cdr.detectChanges();
+}
+
 }
