@@ -7,6 +7,7 @@ import { DataTableComponent } from '../../components/data-table/data-table.compo
 import { ExcelStateService } from '../../services/excel-state.service';
 import { ModalComponent } from '../../components/modal/modal.component';
 import { ChangeDetectorRef } from '@angular/core';
+import * as XLSX from 'xlsx';
 
 @Component({
   selector: 'app-home',
@@ -104,14 +105,56 @@ export class HomePage {
   ordenarAlfabeticamente() {
     if (!this.state.data) return;
     this.ordenAscendente = !this.ordenAscendente;
-    this.state.data.personasProcesadas.sort((a, b) =>
+    this.state.data.personasProcesadas = [...this.state.data.personasProcesadas].sort((a, b) =>
       this.ordenAscendente
         ? a.consultorio.localeCompare(b.consultorio)
         : b.consultorio.localeCompare(a.consultorio)
     );
+
+    this.cdr.detectChanges();
   }
 
   
+onRowClick(row: any) {
+  console.log('Click recibido:', row);
+  this.selectedRow = row;
+  this.cdr.detectChanges();
+  console.log('selectedRow ahora es:', this.selectedRow);
+}
 
+cerrarModal() {
+  this.selectedRow = null;
+  this.cdr.detectChanges();
+}
+
+toggleRevisadoModal() {
+  this.selectedRow.revisado = !this.selectedRow.revisado;
+  this.cdr.detectChanges();
+}
+
+exportarExcel() {
+  if (!this.state.data) return;
+
+  const rows = this.state.data.personasProcesadas.map(p => ({
+    'Consultorio':        p.consultorio,
+    'Consultorio Físico': p.consultorioFisico,
+    'Horario Atención':   p.horarioAtencion,
+    'Horario Citas':      p.horarioCitas,
+    'Intervalo':          p.intervalo,
+    'Ocasión Servicio':   p.ocasionServicio,
+    'Nombre Completo':    p.nombreCompleto,
+    'Sub Rol':            p.subRol,
+    'Turno':              p.turno,
+    'Tipo Visita':        p.tipoVisita,
+    'Días Consulta':      p.diasConsulta,
+    'Revisado':           p.revisado ? 'Sí' : 'No',
+    'Errores':            p.errores.join(', '),
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Información Procesada');
+  XLSX.writeFile(wb, 'informacion-procesada.xlsx');
+}
 
 }

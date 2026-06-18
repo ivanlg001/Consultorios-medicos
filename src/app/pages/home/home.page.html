@@ -41,6 +41,9 @@
       {{ ordenAscendente ? '↑ A → Z' : '↓ Z → A' }}
       Ordenar por Consultorio
     </button>
+     <button class="btn-export" (click)="exportarExcel()">
+        ⬇ Exportar Excel
+      </button>
   </div>
     <app-data-table
       title="Alta Usuarios — Información Procesada"
@@ -49,7 +52,7 @@
       [rows]="state.data.personasProcesadas"
       [columns]="columnsProcesadas"
       [availableHeaders]="state.data.rawHeaders['Alta Usuarios Concentrado'] || []"
-      (rowClick)="selectedRow = $event"
+            (rowClick)="onRowClick($event)"
       />
 
   </div>
@@ -61,5 +64,6 @@
   [row]="selectedRow"
   [columns]="columnsProcesadas"
   (cerrar)="selectedRow = null"
-  (toggleRevisado)="selectedRow.revisado = !selectedRow.revisado" 
+  (cerrar)="cerrarModal()"
+  (toggleRevisado)="toggleRevisadoModal()" 
 />

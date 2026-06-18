@@ -121,34 +121,38 @@ export class ExcelReaderService {
     for (const p of personalOperativo) {
       if (!p.nombre.trim()) continue;
       const nombreMedico = `${p.apellidoPaterno} ${p.apellidoMaterno} ${p.nombre}`.trim();
-      const nomenclatura = this.buscarNomenclatura(p.especialidad, catalogos);
-      const consultorio  = this.generarConsultorio(
+      const nomenclatura  = this.buscarNomenclatura(p.especialidad, catalogos);
+      const consultorio   = this.generarConsultorio(
         nomenclatura,
         nombreMedico,
         personasProcesadas.map(x => ({ nomenclatura: x.consultorio, nombre: x.nombreCompleto }))
       );
-    personasProcesadas.push({
-      nombre:          p.nombre,
-      apellidoPaterno: p.apellidoPaterno,
-      apellidoMaterno: p.apellidoMaterno,
-      nombreCompleto:  nombreMedico,
-      consultorio,
-      consultorioFisico: p.especialidad,
-      horarioAtencion: `${this.formatearHora(p.horaInicioAtencion)} - ${this.formatearHora(p.horaFinAtencion)}`,  
-      horarioCitas: this.generarHorarioCitas(p.horaInicioCita,  p.horaFinCita,  p.intervaloConsulta),
-      intervalo: p.intervaloConsulta,
-      subRol:   'MEDICO ESPECIALISTA',
-      turno:    this.obtenerTurno(p.turno),
-      tipoVisita:   'CONSULTORIO',
-      diasConsulta: this.obtenerDiasConsulta(p),
-      revisado: false,
-      ocasionServicio: p.ocasionServicio,
-      errores: [
-          ...(consultorio.includes('SIN_CATALOGO') ? [`Especialidad sin catálogo: ${p.especialidad}`] : []),
-          ...(this.generarHorarioCitas(p.horaInicioCita, p.horaFinCita, p.intervaloConsulta).includes('⚠') ? ['Horario de citas no cuadra'] : []),
-        ],
-    });
-}
+      const horarioCitas = this.generarHorarioCitas(p.horaInicioCita, p.horaFinCita, p.intervaloConsulta);
+
+      const errores: string[] = [
+        ...(consultorio.includes('SIN_CATALOGO') ? [`Especialidad sin catálogo: ${p.especialidad}`] : []),
+        ...(horarioCitas.includes('⚠') ? ['Horario de citas no cuadra'] : []),
+      ];
+
+      personasProcesadas.push({
+        nombre:            p.nombre,
+        apellidoPaterno:   p.apellidoPaterno,
+        apellidoMaterno:   p.apellidoMaterno,
+        nombreCompleto:    nombreMedico,
+        consultorio,
+        consultorioFisico: p.especialidad,
+        horarioAtencion:   `${this.formatearHora(p.horaInicioAtencion)} - ${this.formatearHora(p.horaFinAtencion)}`,
+        horarioCitas,
+        intervalo:         p.intervaloConsulta,
+        ocasionServicio:   p.ocasionServicio,
+        subRol:            'MEDICO ESPECIALISTA',
+        turno:             this.obtenerTurno(p.turno),
+        tipoVisita:        'CONSULTORIO',
+        diasConsulta:      this.obtenerDiasConsulta(p),
+        revisado:          false,
+        errores,
+      });
+    }
 
     return { personalOperativo, personasProcesadas, allSheets, rawHeaders };
   }
