@@ -20,6 +20,7 @@ Esta guía cubre la instalación completa desde cero: **Node.js**, **Git**, **Vi
 10. [Estructura del proyecto](#estructura-del-proyecto)
 11. [Solución de problemas](#solución-de-problemas)
 12. [Tecnologías](#tecnologías)
+13. [Instalador](#instalador)
 
 ---
 
@@ -453,3 +454,33 @@ cd Consultorios-medicos
 docker compose up --build -d
 # → http://localhost:8080
 ```
+
+## Instalador
+### Prerrequisitos
+- Node.js instalado
+- Dependencias instaladas: `npm install`
+
+### Comandos
+
+#### 1. Build completo (recomendado)
+Genera el build de Angular y el instalador en un solo comando:
+```bash
+npm run electron:build
+```
+
+#### 2. Paso a paso (opcional)
+```bash
+# Build de Angular para Electron
+ng build --configuration electron
+
+# Generar instalador .exe
+npx electron-builder build --win
+```
+
+#### 3. Solo probar en Electron (sin generar .exe)
+```bash
+npm run electron
+```
+
+### Resultado
+El instalador se genera en: Consultorios medicos\dist
