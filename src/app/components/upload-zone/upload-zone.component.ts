@@ -36,6 +36,9 @@ export class UploadZoneComponent {
   }
 
   private emitFile(file: File) {
+
+    console.log("EMITIENDO", file.name);
+
     if (!file.name.match(/\.(xlsx|xls)$/i)) return;
     this.fileName = file.name;
     this.fileSelected.emit(file);

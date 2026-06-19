@@ -120,3 +120,97 @@
 .btn-revisado.activo:hover {
   background: #d6ede3;
 }
+
+.errores-box {
+  margin: 0.75rem 1.5rem;
+  padding: 0.65rem 1rem;
+  background: #fff5f5;
+  border: 1px solid #fcc;
+  border-radius: 8px;
+}
+
+.errores-title {
+  margin: 0 0 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #a33;
+}
+
+.errores-box ul {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.errores-box li {
+  font-size: 0.82rem;
+  color: #a33;
+  margin-bottom: 0.2rem;
+}
+
+.btn-edit {
+  background: #eef0fe;
+  border: 1px solid #c5cafa;
+  border-radius: 8px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: #4b50c4;
+  transition: all 0.2s;
+}
+
+.btn-edit:hover {
+  background: #dfe2fc;
+}
+
+.field-input {
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  font-size: 0.875rem;
+  color: #1a1a18;
+  font-family: inherit;
+}
+
+.field-input:focus {
+  outline: none;
+  border-color: #1a4d3a;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #f0f0ea;
+}
+
+.btn-cancel {
+  background: #f3f3f0;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: #666;
+}
+
+.btn-cancel:hover {
+  background: #e8e8e3;
+}
+
+.btn-save {
+  background: #1a4d3a;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  color: #fff;
+}
+
+.btn-save:hover {
+  background: #0f3528;
+}
