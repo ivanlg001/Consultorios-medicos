@@ -143,3 +143,18 @@ h1 {
   margin-bottom: 0.25rem;
 }
 
+.btn-export {
+  background: #1a4d3a;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.4rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-export:hover {
+  background: #0f3528;
+}
