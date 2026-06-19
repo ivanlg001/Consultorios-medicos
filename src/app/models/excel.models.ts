@@ -42,6 +42,7 @@ export interface PersonaProcesada {
   diasConsulta: string;
   revisado: boolean;
   ocasionServicio: string;
+  errores: string[];
 }
 
 export interface SheetData {

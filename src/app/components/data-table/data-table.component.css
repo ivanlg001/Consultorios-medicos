@@ -145,3 +145,12 @@ tr.revisado td {
   font-weight: 700;
   margin-left: 4px;
 }
+
+tr.error td {
+  background: #ffe0e0;
+  border-bottom-color: #ffb3b3;
+}
+
+tr.error:hover td {
+  background: #ffcccc;
+}

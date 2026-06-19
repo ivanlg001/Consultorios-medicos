@@ -45,6 +45,7 @@
         <tr *ngFor="let row of rows; let i = index"
             class="clickable"
             [class.revisado]="row.revisado"
+            [class.error]="row.errores?.length > 0 && !row.revisado"
             (click)="rowClick.emit(row)">
           <td class="idx">{{ i + 1 }}
             <span class="check-mark" *ngIf="row.revisado">✓</span>

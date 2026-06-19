@@ -75,7 +75,7 @@ export class ExcelReaderService {
     };
 
     const personalOperativo: PersonalOperativo[] = poRows
-      .filter(r => keys.nombre && r[keys.nombre])
+      .filter(r => Object.values(r).some(v => v?.toString().trim() !== ''))  // descarta solo filas 100% vacías
       .map(r => ({
         entidadFederativa:   r[keys.entidadFederativa]  || '',
         cvePresupuestal:     r[keys.cvePresupuestal]    || '',
@@ -119,32 +119,44 @@ export class ExcelReaderService {
 
     const personasProcesadas: PersonaProcesada[] = [];
     for (const p of personalOperativo) {
-      if (!p.nombre.trim()) continue;
-      const nombreMedico = `${p.apellidoPaterno} ${p.apellidoMaterno} ${p.nombre}`.trim();
-      const nomenclatura = this.buscarNomenclatura(p.especialidad, catalogos);
-      const consultorio  = this.generarConsultorio(
+      const sinNombre = !p.nombre.trim();
+      const nombreMedico = sinNombre
+        ? 'SIN NOMBRE'
+        : `${p.apellidoPaterno} ${p.apellidoMaterno} ${p.nombre}`.trim();
+
+      const nomenclatura  = this.buscarNomenclatura(p.especialidad, catalogos);
+      const consultorio   = this.generarConsultorio(
         nomenclatura,
         nombreMedico,
         personasProcesadas.map(x => ({ nomenclatura: x.consultorio, nombre: x.nombreCompleto }))
       );
-    personasProcesadas.push({
-      nombre:          p.nombre,
-      apellidoPaterno: p.apellidoPaterno,
-      apellidoMaterno: p.apellidoMaterno,
-      nombreCompleto:  nombreMedico,
-      consultorio,
-      consultorioFisico: p.especialidad,
-      horarioAtencion: `${this.formatearHora(p.horaInicioAtencion)} - ${this.formatearHora(p.horaFinAtencion)}`,  
-      horarioCitas: this.generarHorarioCitas(p.horaInicioCita,  p.horaFinCita,  p.intervaloConsulta),
-      intervalo: p.intervaloConsulta,
-      subRol:   'MEDICO ESPECIALISTA',
-      turno:    this.obtenerTurno(p.turno),
-      tipoVisita:   'CONSULTORIO',
-      diasConsulta: this.obtenerDiasConsulta(p),
-      revisado: false,
-      ocasionServicio: p.ocasionServicio,
-    });
-}
+      const horarioCitas = this.generarHorarioCitas(p.horaInicioCita, p.horaFinCita, p.intervaloConsulta);
+
+      const errores: string[] = [
+        ...(sinNombre ? ['Registro sin nombre de médico'] : []),
+        ...(consultorio.includes('SIN_CATALOGO') ? [`Especialidad sin catálogo: ${p.especialidad}`] : []),
+        ...(horarioCitas.includes('⚠') ? ['Horario de citas no cuadra'] : []),
+      ];
+
+      personasProcesadas.push({
+        nombre:            sinNombre ? 'SIN NOMBRE' : p.nombre,
+        apellidoPaterno:   p.apellidoPaterno,
+        apellidoMaterno:   p.apellidoMaterno,
+        nombreCompleto:    nombreMedico,
+        consultorio,
+        consultorioFisico: p.especialidad,
+        horarioAtencion:   `${this.formatearHora(p.horaInicioAtencion)} - ${this.formatearHora(p.horaFinAtencion)}`,
+        horarioCitas,
+        intervalo:         p.intervaloConsulta,
+        ocasionServicio:   p.ocasionServicio,
+        subRol:            'MEDICO ESPECIALISTA',
+        turno:             this.obtenerTurno(p.turno),
+        tipoVisita:        'CONSULTORIO',
+        diasConsulta:      this.obtenerDiasConsulta(p),
+        revisado:          false,
+        errores,
+      });
+    }
 
     return { personalOperativo, personasProcesadas, allSheets, rawHeaders };
   }
@@ -319,7 +331,7 @@ private formatearHora(valor: string): string {
 
     const finCorregidoFmt = this.formatearHora(String(finCorregidoMin / 1440));
 
-    return `${inicioFmt} - ⚠ HORARIOS DE CITAS NO CUADRA, POSIBLE ${finCorregidoFmt}`;
+    return `${inicioFmt} - ${finFmt} ⚠ HORARIOS DE CITAS NO CUADRA, POSIBLE ${finCorregidoFmt}`;
   }
 
   private obtenerTurno(valor: string): string {
